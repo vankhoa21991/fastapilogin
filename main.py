@@ -28,9 +28,11 @@ app = FastAPI()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
+from fastapi.security import OAuth2PasswordRequestForm
+
 @app.post('/login', response_model=Dict)
 def login(
-        payload: UserLoginSchema = Body(),
+        payload: OAuth2PasswordRequestForm = Depends(),
         session: Session = Depends(get_db)
     ):
     """Processes user's authentication and returns a token
@@ -45,7 +47,7 @@ def login(
     """
     try:
         user:user_model.User = user_db_services.get_user(
-            session=session, email=payload.email
+            session=session, email=payload.username
         )
     except:
         raise HTTPException(
@@ -75,12 +77,13 @@ def signup(
 
 @app.get("/profile/{id}", response_model=UserSchema)
 def profile(
-	id:int, 
-	session:Session=Depends(get_db),
-	token: str = Depends(oauth2_scheme),
-):
-	"""Processes request to retrieve the requesting user
-	profile 
-	"""
-	return user_db_services.get_user_by_id(session=session, id=id)
+    id:int, 
+    token: str = Depends(oauth2_scheme),
+    session:Session=Depends(get_db)
+    ):
+        """Processes request to retrieve the requesting user
+    profile 
+    """
+        return user_db_services.get_user_by_id(session=session, id=id)
+
 
